@@ -121,10 +121,10 @@ echo 🔗 Step 3: Auto-deploying to VPS...
 
 REM Copy and execute deployment script
 echo 📤 Copying deployment script to VPS...
-scp -P 2222 -o StrictHostKeyChecking=no auto_deploy.sh %VPS_USER%@%VPS_IP%:/tmp/
+scp -P 22 -o StrictHostKeyChecking=no auto_deploy.sh %VPS_USER%@%VPS_IP%:/tmp/
 
 echo 🚀 Executing deployment on VPS...
-ssh -p 2222 -o StrictHostKeyChecking=no %VPS_USER%@%VPS_IP% "chmod +x /tmp/auto_deploy.sh && /tmp/auto_deploy.sh"
+ssh -p 22 -o StrictHostKeyChecking=no %VPS_USER%@%VPS_IP% "chmod +x /tmp/auto_deploy.sh && /tmp/auto_deploy.sh"
 
 REM Cleanup
 del auto_deploy.sh
@@ -135,6 +135,6 @@ echo 🌐 Your application should be live at: https://cambridgeexam.dobeda.com/
 echo.
 echo 📋 Quick check commands:
 echo   Test app: curl https://cambridgeexam.dobeda.com/health
-echo   Check logs: ssh -p 2222 %VPS_USER%@%VPS_IP% "journalctl -u cambridge-exam -f"
+echo   Check logs: ssh -p 22 %VPS_USER%@%VPS_IP% "journalctl -u cambridge-exam -f"
 echo.
 pause
