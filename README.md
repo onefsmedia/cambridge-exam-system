@@ -37,15 +37,42 @@ A modern, professional Python application for generating Cambridge International
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### 🔥 Super Quick Setup (Recommended)
+
+**Option 1: One-Click Setup (Windows)**
+```bash
+# Download and setup everything automatically
+git clone https://github.com/onefsmedia/cambridge-exam-system.git
+cd cambridge-exam-system
+install.bat
+run.bat
+```
+
+**Option 2: One-Click Setup (Mac/Linux)**
+```bash
+# Download and setup everything automatically
+git clone https://github.com/onefsmedia/cambridge-exam-system.git
+cd cambridge-exam-system
+chmod +x install.sh run.sh
+./install.sh
+./run.sh
+```
+
+**Option 3: GitHub Codespaces (Browser)**
+1. Click the green "Code" button on GitHub
+2. Select "Codespaces" tab
+3. Click "Create codespace on main"
+4. Wait for setup, then run: `python main_gui_complete.py`
+
+### 📋 Prerequisites
 - Python 3.8 or higher
 - Windows, macOS, or Linux
 
-### Installation
+### 🛠️ Manual Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/cambridge-exam-system.git
+   git clone https://github.com/onefsmedia/cambridge-exam-system.git
    cd cambridge-exam-system
    ```
 
