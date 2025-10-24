@@ -139,11 +139,11 @@ Write-Host "`n🔗 Step 3: Auto-deploying to VPS..." -ForegroundColor Yellow
 try {
     # Copy script to VPS
     Write-Host "📤 Copying deployment script to VPS..." -ForegroundColor White
-    scp -o StrictHostKeyChecking=no $tempScript ${VpsUser}@${VpsIP}:/tmp/
+    scp -P 2222 -o StrictHostKeyChecking=no $tempScript ${VpsUser}@${VpsIP}:/tmp/
 
     # Execute on VPS
     Write-Host "🚀 Executing deployment on VPS..." -ForegroundColor White
-    ssh -o StrictHostKeyChecking=no ${VpsUser}@${VpsIP} "chmod +x /tmp/$tempScript && /tmp/$tempScript"
+    ssh -p 2222 -o StrictHostKeyChecking=no ${VpsUser}@${VpsIP} "chmod +x /tmp/$tempScript && /tmp/$tempScript"
 
     Write-Host "`n🎉 Auto-deployment completed successfully!" -ForegroundColor Green
     Write-Host "🌐 Your application should be live at: https://cambridgeexam.dobeda.com/" -ForegroundColor Cyan
@@ -152,7 +152,7 @@ try {
     Write-Host "  Test app: " -NoNewline -ForegroundColor Gray
     Write-Host "curl https://cambridgeexam.dobeda.com/health" -ForegroundColor White
     Write-Host "  Check logs: " -NoNewline -ForegroundColor Gray
-    Write-Host "ssh $VpsUser@$VpsIP 'journalctl -u cambridge-exam -f'" -ForegroundColor White
+    Write-Host "ssh -p 2222 $VpsUser@$VpsIP 'journalctl -u cambridge-exam -f'" -ForegroundColor White
 }
 catch {
     Write-Host "❌ Deployment failed: $_" -ForegroundColor Red
