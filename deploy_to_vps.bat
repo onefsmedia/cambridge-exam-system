@@ -5,11 +5,13 @@ REM This script pushes code from local machine to cambridgeexam.dobeda.com VPS
 echo 🚀 Deploying Cambridge Exam System to VPS...
 echo =============================================
 
-REM Check if we have VPS connection details
-set /p VPS_IP="Enter your VPS IP address: "
-set /p VPS_USER="Enter VPS username (default: root): "
-if "%VPS_USER%"=="" set VPS_USER=root
+REM Set VPS connection details
+set VPS_IP=82.25.93.227
+set VPS_USER=root
 
+echo.
+echo 📋 Deployment Target: %VPS_USER%@%VPS_IP%
+echo 🌐 Domain: cambridgeexam.dobeda.com
 echo.
 echo 📋 Deployment Steps:
 echo 1. Push latest changes to GitHub
@@ -22,7 +24,7 @@ echo 📤 Step 1: Pushing to GitHub...
 git add .
 git status
 set /p COMMIT_MSG="Enter commit message (or press Enter for default): "
-if "%COMMIT_MSG%"=="" set COMMIT_MSG="Deploy updates to VPS"
+if "%COMMIT_MSG%"=="" set COMMIT_MSG="Deploy updates to VPS %date% %time%"
 
 git commit -m "%COMMIT_MSG%"
 git push origin main
