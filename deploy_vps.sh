@@ -1,5 +1,5 @@
 #!/bin/bash
-# Quick CloudPanel deployment script
+# Quick CloudPanel deployment script for cambridgeexam.dobeda.com
 
 echo "🚀 Deploying Cambridge Exam System to CloudPanel VPS..."
 
@@ -16,12 +16,12 @@ apt update && apt upgrade -y
 apt install -y python3 python3-pip python3-venv git
 
 # Create application user (if not exists)
-if ! id "examreports" &>/dev/null; then
-    useradd -m -s /bin/bash examreports
+if ! id "cambridgeexam" &>/dev/null; then
+    useradd -m -s /bin/bash cambridgeexam
 fi
 
 # Create application directory
-APP_DIR="/home/examreports/cambridge_exam_system"
+APP_DIR="/home/cambridgeexam/cambridge_exam_system"
 mkdir -p $APP_DIR
 cd $APP_DIR
 
@@ -44,7 +44,7 @@ mkdir -p uploads reports logs
 chmod 755 uploads reports logs
 
 # Set ownership
-chown -R examreports:examreports $APP_DIR
+chown -R cambridgeexam:cambridgeexam $APP_DIR
 
 # Create systemd service
 cat > /etc/systemd/system/cambridge-exam.service << EOF
@@ -54,8 +54,8 @@ After=network.target
 
 [Service]
 Type=notify
-User=examreports
-Group=examreports
+User=cambridgeexam
+Group=cambridgeexam
 WorkingDirectory=$APP_DIR
 Environment=PATH=$APP_DIR/venv/bin
 ExecStart=$APP_DIR/venv/bin/gunicorn --bind 0.0.0.0:5000 --workers 3 wsgi:application

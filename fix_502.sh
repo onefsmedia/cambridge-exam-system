@@ -1,11 +1,11 @@
 #!/bin/bash
-# Quick fix script for 502 Bad Gateway error
+# Quick fix script for 502 Bad Gateway error on cambridgeexam.dobeda.com
 
 echo "🚀 Quick Fix for 502 Bad Gateway Error"
 echo "======================================"
 
 # Ensure we're in the right directory
-APP_DIR="/home/examreports/cambridge_exam_system"
+APP_DIR="/home/cambridgeexam/cambridge_exam_system"
 if [ ! -d "$APP_DIR" ]; then
     echo "❌ Application directory not found at $APP_DIR"
     echo "Creating directory and cloning repository..."
@@ -27,7 +27,7 @@ pip install -r requirements_web.txt
 
 # Fix permissions
 echo "🔧 Fixing permissions..."
-sudo chown -R examreports:examreports $APP_DIR
+sudo chown -R cambridgeexam:cambridgeexam $APP_DIR
 chmod +x app.py wsgi.py
 
 # Create missing directories
@@ -74,8 +74,8 @@ After=network.target
 
 [Service]
 Type=exec
-User=examreports
-Group=examreports
+User=cambridgeexam
+Group=cambridgeexam
 WorkingDirectory=$APP_DIR
 Environment=PATH=$APP_DIR/venv/bin:/usr/local/bin:/usr/bin:/bin
 Environment=FLASK_ENV=production
