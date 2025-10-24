@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cambridge International Examination Report System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            margin: 2rem auto;
+            max-width: 1200px;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 2rem;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+        }
+        .subject-row {
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-left: 4px solid #007bff;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border: none;
+            border-radius: 10px;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            border: none;
+            border-radius: 10px;
+        }
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+        }
+        .badge {
+            font-size: 0.9em;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header">
+                <h1 class="mb-3">
+                    <i class="fas fa-graduation-cap me-3"></i>
+                    Cambridge International Examination Report System
+                </h1>
+                <p class="lead mb-0">Generate professional Cambridge report cards with weighted grading</p>
+            </div>
+
+            <!-- Main Content -->
+            <div class="p-4">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form id="reportForm" action="{{ url_for('generate_report') }}" method="POST">
+                    <!-- Student Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h3 class="text-primary mb-3">
+                                <i class="fas fa-user me-2"></i>Student Information
+                            </h3>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="student_name" class="form-label">Student Name</label>
+                            <input type="text" class="form-control" id="student_name" name="student_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="candidate_number" class="form-label">Candidate Number</label>
+                            <input type="text" class="form-control" id="candidate_number" name="candidate_number" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="center_number" class="form-label">Center Number</label>
+                            <input type="text" class="form-control" id="center_number" name="center_number" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="session" class="form-label">Session</label>
+                            <select class="form-select" id="session" name="session" required>
+                                <option value="">Select Session</option>
+                                <option value="May/June">May/June</option>
+                                <option value="October/November">October/November</option>
+                                <option value="February/March">February/March</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="year" class="form-label">Year</label>
+                            <input type="number" class="form-control" id="year" name="year" min="2020" max="2030" value="2024" required>
+                        </div>
+                    </div>
+
+                    <!-- Subjects Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h3 class="text-primary mb-3">
+                                <i class="fas fa-book me-2"></i>Subject Grades
+                                <span class="badge bg-info ms-2" id="subjectCount">0 subjects</span>
+                            </h3>
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-success" onclick="addSubject()">
+                                    <i class="fas fa-plus me-2"></i>Add Subject
+                                </button>
+                                <button type="button" class="btn btn-warning ms-2" onclick="clearAllSubjects()">
+                                    <i class="fas fa-trash me-2"></i>Clear All
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Subjects Container -->
+                    <div id="subjectsContainer" class="mb-4">
+                        <!-- Subjects will be added here dynamically -->
+                    </div>
+
+                    <!-- Hidden field for subject count -->
+                    <input type="hidden" id="subject_count" name="subject_count" value="0">
+
+                    <!-- Generate Button -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg" id="generateBtn" disabled>
+                            <i class="fas fa-file-pdf me-2"></i>Generate PDF Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Subjects Modal -->
+    <div class="modal fade" id="subjectsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Available Cambridge Subjects</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row" id="subjectsGrid">
+                        <!-- Subjects will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let subjectIndex = 0;
+        const subjects = JSON.parse('{{ subjects | tojson | safe }}');
+
+        function addSubject() {
+            const container = document.getElementById('subjectsContainer');
+            const subjectDiv = document.createElement('div');
+            subjectDiv.className = 'subject-row';
+            subjectDiv.id = `subject_${subjectIndex}`;
+            
+            subjectDiv.innerHTML = `
+                <div class="row align-items-end">
+                    <div class="col-md-6 mb-2">
+                        <label for="subject_${subjectIndex}" class="form-label">Subject</label>
+                        <select class="form-select" name="subject_${subjectIndex}" required>
+                            <option value="">Select Subject</option>
+                            ${Object.keys(subjects).map(subject => 
+                                `<option value="${subject}">${subject}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label for="score_${subjectIndex}" class="form-label">Raw Score (0-100)</label>
+                        <input type="number" class="form-control" name="score_${subjectIndex}" 
+                               min="0" max="100" step="0.1" required>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <button type="button" class="btn btn-danger w-100" onclick="removeSubject(${subjectIndex})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(subjectDiv);
+            subjectIndex++;
+            updateSubjectCount();
+        }
+
+        function removeSubject(index) {
+            const subjectDiv = document.getElementById(`subject_${index}`);
+            if (subjectDiv) {
+                subjectDiv.remove();
+                updateSubjectCount();
+            }
+        }
+
+        function clearAllSubjects() {
+            if (confirm('Are you sure you want to clear all subjects?')) {
+                document.getElementById('subjectsContainer').innerHTML = '';
+                updateSubjectCount();
+            }
+        }
+
+        function updateSubjectCount() {
+            const count = document.querySelectorAll('.subject-row').length;
+            document.getElementById('subjectCount').textContent = `${count} subject${count !== 1 ? 's' : ''}`;
+            document.getElementById('subject_count').value = count;
+            document.getElementById('generateBtn').disabled = count === 0;
+        }
+
+        // Add first subject by default
+        addSubject();
+    </script>
+</body>
+</html>
