@@ -286,6 +286,71 @@
             background: var(--light-bg);
         }
 
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--light-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+
+        /* Email Modal Styles */
+        .modal-content {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .modal-header {
+            border-radius: 15px 15px 0 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .modal-title {
+            font-weight: 600;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            border-radius: 0 0 15px 15px;
+            padding: 1rem 2rem;
+        }
+
+        #modalEmailMessage {
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+        }
+
+        .alert-info {
+            background-color: #e7f3ff;
+            border-color: #b8daff;
+            color: #0056b3;
+        }
+
         @media (max-width: 768px) {
             .main-container {
                 margin: 0.5rem;
@@ -303,6 +368,11 @@
             
             .action-buttons {
                 flex-direction: column;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
             }
         }
     </style>
@@ -361,70 +431,172 @@
                     </div>
                 </div>
 
-                <!-- Subject Selection Section -->
-                <div class="section-card">
-                    <div class="section-header">
-                        <i class="fas fa-book"></i>
-                        Subject Selection
-                        <span class="counter-badge" id="subjectCounter">0 subjects</span>
-                        <div class="ms-auto">
-                            <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="selectAllSubjects()">
-                                Select All
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllSubjects()">
-                                Clear All
-                            </button>
-                        </div>
-                    </div>
-                    <div class="section-body">
-                        <input type="text" class="search-box" id="subjectSearch" placeholder="Search subjects..." onkeyup="filterSubjects()">
-                        
-                        <div class="subject-grid" id="subjectGrid">
-                            {% for code, subject in subjects.items() %}
-                            <div class="subject-item" data-code="{{ code }}" onclick="toggleSubject('{{ code }}')">
-                                <input type="checkbox" class="subject-checkbox" id="subject_{{ code }}" data-code="{{ code }}">
-                                <label class="subject-label" for="subject_{{ code }}">
-                                    <strong>{{ code }}</strong><br>
-                                    <small>{{ subject.name }}</small>
-                                </label>
+                <!-- Two-Column Layout: Desktop Style -->
+                <div class="row">
+                    <!-- Left Column: Subject Selection & Grading -->
+                    <div class="col-lg-8">
+                        <!-- Subject Selection Section -->
+                        <div class="section-card">
+                            <div class="section-header">
+                                <i class="fas fa-book"></i>
+                                Subject Selection
+                                <span class="counter-badge" id="subjectCounter">0 subjects</span>
+                                <div class="ms-auto">
+                                    <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="selectAllSubjects()">
+                                        Select All
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllSubjects()">
+                                        Clear All
+                                    </button>
+                                </div>
                             </div>
-                            {% endfor %}
+                            <div class="section-body">
+                                <input type="text" class="search-box" id="subjectSearch" placeholder="Search subjects..." onkeyup="filterSubjects()">
+                                
+                                <div class="subject-grid" id="subjectGrid">
+                                    {% for code, subject in subjects.items() %}
+                                    <div class="subject-item" data-code="{{ code }}" onclick="toggleSubject('{{ code }}')">
+                                        <input type="checkbox" class="subject-checkbox" id="subject_{{ code }}" data-code="{{ code }}">
+                                        <label class="subject-label" for="subject_{{ code }}">
+                                            <strong>{{ code }}</strong><br>
+                                            <small>{{ subject.name }}</small>
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Selected Subjects & Grades Section -->
+                        <div class="section-card">
+                            <div class="section-header">
+                                <i class="fas fa-clipboard-list"></i>
+                                Subject Grades
+                                <span class="counter-badge" id="gradesCounter">0 subjects</span>
+                                <div class="ms-auto">
+                                    <button type="button" class="btn btn-sm btn-success-custom" onclick="calculateGPA()">
+                                        <i class="fas fa-calculator"></i> Calculate GPA
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="section-body">
+                                <div id="selectedSubjects" class="selected-subjects">
+                                    <p class="text-muted text-center">No subjects selected. Please select subjects from above.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Actions & Results -->
+                    <div class="col-lg-4">
+                        <!-- Action Buttons Section -->
+                        <div class="section-card">
+                            <div class="section-header">
+                                <i class="fas fa-cog"></i>
+                                Actions
+                            </div>
+                            <div class="section-body">
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-primary-custom" onclick="previewReport()" disabled id="previewBtn">
+                                        <i class="fas fa-eye me-2"></i>Preview Report
+                                    </button>
+                                    <button type="button" class="btn btn-success-custom" onclick="generateReport()" disabled id="generateBtn">
+                                        <i class="fas fa-file-pdf me-2"></i>Generate PDF Report
+                                    </button>
+                                    <button type="button" class="btn btn-warning-custom" onclick="openEmailModal()" disabled id="emailBtn">
+                                        <i class="fas fa-envelope me-2"></i>Email Report
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
+                                        <i class="fas fa-redo me-2"></i>Reset Form
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Statistics Section -->
+                        <div class="section-card">
+                            <div class="section-header">
+                                <i class="fas fa-chart-bar"></i>
+                                Statistics
+                            </div>
+                            <div class="section-body">
+                                <div class="stats-grid">
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="statsSubjects">0</div>
+                                        <div class="stat-label">Subjects</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="statsAverage">-</div>
+                                        <div class="stat-label">Average</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="statsTotal">-</div>
+                                        <div class="stat-label">Total Points</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="statsGrade">-</div>
+                                        <div class="stat-label">Overall Grade</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Selected Subjects & Grades Section -->
-                <div class="section-card">
-                    <div class="section-header">
-                        <i class="fas fa-clipboard-list"></i>
-                        Subject Grades
-                        <span class="counter-badge" id="gradesCounter">0 subjects</span>
-                        <div class="ms-auto">
-                            <button type="button" class="btn btn-sm btn-success-custom" onclick="calculateGPA()">
-                                <i class="fas fa-calculator"></i> Calculate GPA
-                            </button>
-                        </div>
-                    </div>
-                    <div class="section-body">
-                        <div id="selectedSubjects" class="selected-subjects">
-                            <p class="text-muted text-center">No subjects selected. Please select subjects from above.</p>
-                        </div>
-                    </div>
+    <!-- Email Modal -->
+    <div class="modal fade" id="emailModal" tabindex="-1" aria-labelledby="emailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="emailModalLabel">
+                        <i class="fas fa-envelope me-2"></i>Email Cambridge Report
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-
-                <!-- Action Buttons -->
-                <div class="action-buttons">
-                    <button type="button" class="btn btn-primary-custom btn-custom" onclick="previewReport()" disabled id="previewBtn">
-                        <i class="fas fa-eye me-2"></i>Preview Report
+                <div class="modal-body">
+                    <form id="emailForm">
+                        <div class="mb-3">
+                            <label for="modalEmailTo" class="form-label">
+                                <i class="fas fa-user me-1"></i>Recipient Email
+                            </label>
+                            <input type="email" class="form-control" id="modalEmailTo" 
+                                   placeholder="Enter recipient's email address" required>
+                            <div class="form-text">Enter the email address where you want to send the report</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="modalEmailSubject" class="form-label">
+                                <i class="fas fa-tag me-1"></i>Subject
+                            </label>
+                            <input type="text" class="form-control" id="modalEmailSubject" 
+                                   value="Cambridge Examination Report" readonly>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="modalEmailMessage" class="form-label">
+                                <i class="fas fa-message me-1"></i>Email Message
+                            </label>
+                            <textarea class="form-control" id="modalEmailMessage" rows="8" 
+                                      placeholder="Enter your message here..."></textarea>
+                            <div class="form-text">This message will be sent along with the PDF report attachment</div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> The PDF report will be automatically attached to the email. 
+                            Make sure you have generated a report first.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
                     </button>
-                    <button type="button" class="btn btn-success-custom btn-custom" onclick="generateReport()" disabled id="generateBtn">
-                        <i class="fas fa-file-pdf me-2"></i>Generate PDF Report
-                    </button>
-                    <button type="button" class="btn btn-warning-custom btn-custom" onclick="sendViaMail()" disabled id="emailBtn">
-                        <i class="fas fa-envelope me-2"></i>Send Via Mail
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-custom" onclick="resetForm()">
-                        <i class="fas fa-redo me-2"></i>Reset Form
+                    <button type="button" class="btn btn-primary" onclick="sendEmailReport()">
+                        <i class="fas fa-paper-plane me-1"></i>Send Email
                     </button>
                 </div>
             </div>
@@ -535,22 +707,6 @@
                     </div>
                 `;
             });
-                            <input type="number" class="form-control" step="0.1" min="0.1" max="3.0"
-                                   value="${subjectCoefficients[code] || 1.0}"
-                                   onchange="updateCoefficient('${code}', this.value)">
-                        </div>
-                        <div class="text-center">
-                            <label class="form-label">Grade</label>
-                            <div class="grade-display ${gradeClass}">${grade}</div>
-                        </div>
-                        <div>
-                            <button type="button" class="btn btn-danger-custom btn-sm" onclick="removeSubject('${code}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
             
             container.innerHTML = html;
         }
@@ -558,10 +714,13 @@
         function updateGrade(code, score) {
             subjectGrades[code] = score;
             updateSelectedSubjects();
+            updateStatistics();
+            updateActionButtons();
         }
 
         function updateCoefficient(code, coefficient) {
             subjectCoefficients[code] = parseFloat(coefficient);
+            updateStatistics();
         }
 
         function updateComment(code, comment) {
@@ -607,6 +766,56 @@
         function updateCounters() {
             document.getElementById('subjectCounter').textContent = `${selectedSubjects.size} subjects`;
             document.getElementById('gradesCounter').textContent = `${selectedSubjects.size} subjects`;
+            updateStatistics();
+        }
+
+        function updateStatistics() {
+            let totalPoints = 0;
+            let totalCredits = 0;
+            let validGrades = 0;
+            let totalScore = 0;
+
+            selectedSubjects.forEach(code => {
+                const score = parseFloat(subjectGrades[code]);
+                const coefficient = subjectCoefficients[code] || 1.0;
+                
+                if (!isNaN(score)) {
+                    const gradePoints = getGradePoints(score);
+                    totalPoints += gradePoints * coefficient;
+                    totalCredits += coefficient;
+                    totalScore += score;
+                    validGrades++;
+                }
+            });
+
+            // Update statistics display
+            document.getElementById('statsSubjects').textContent = selectedSubjects.size;
+            
+            if (validGrades > 0) {
+                const average = (totalScore / validGrades).toFixed(1);
+                const gpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : '0.00';
+                const overallGrade = calculateGrade(parseFloat(average));
+                
+                document.getElementById('statsAverage').textContent = `${average}%`;
+                document.getElementById('statsTotal').textContent = gpa;
+                document.getElementById('statsGrade').textContent = overallGrade;
+            } else {
+                document.getElementById('statsAverage').textContent = '-';
+                document.getElementById('statsTotal').textContent = '-';
+                document.getElementById('statsGrade').textContent = '-';
+            }
+        }
+
+        function getGradePoints(score) {
+            if (score >= 90) return 4.0;
+            if (score >= 80) return 3.7;
+            if (score >= 70) return 3.3;
+            if (score >= 60) return 3.0;
+            if (score >= 50) return 2.7;
+            if (score >= 40) return 2.3;
+            if (score >= 30) return 2.0;
+            if (score >= 20) return 1.0;
+            return 0.0;
         }
 
         function updateActionButtons() {
@@ -740,13 +949,6 @@
             document.body.appendChild(form2);
             form2.submit();
         }
-                input.value = value;
-                form2.appendChild(input);
-            }
-
-            document.body.appendChild(form2);
-            form2.submit();
-        }
 
         function previewReport() {
             // Similar to generateReport but for preview
@@ -772,6 +974,113 @@
                 document.getElementById('subjectSearch').value = '';
                 filterSubjects();
             }
+        }
+
+        function openEmailModal() {
+            // Get student name for personalized email
+            const studentName = document.getElementById('student_name').value || 'Student';
+            
+            // Set subject line with student name
+            document.getElementById('modalEmailSubject').value = `Cambridge Report Card - ${studentName}`;
+            
+            // Set default message
+            const defaultMessage = `Dear Recipient,
+
+Please find attached the Cambridge International Examination report card for ${studentName}.
+
+This report contains:
+- Detailed subject grades and performance
+- Teacher comments for each subject
+- Overall academic summary
+
+Best regards,
+Cambridge Report System`;
+            
+            document.getElementById('modalEmailMessage').value = defaultMessage;
+            
+            // Clear email field
+            document.getElementById('modalEmailTo').value = '';
+            
+            // Show the modal
+            const emailModal = new bootstrap.Modal(document.getElementById('emailModal'));
+            emailModal.show();
+        }
+
+        function sendEmailReport() {
+            const recipient = document.getElementById('modalEmailTo').value.trim();
+            const subject = document.getElementById('modalEmailSubject').value;
+            const message = document.getElementById('modalEmailMessage').value;
+            
+            // Validate email
+            if (!recipient) {
+                alert('Please enter a recipient email address.');
+                return;
+            }
+            
+            // Basic email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(recipient)) {
+                alert('Please enter a valid email address.');
+                return;
+            }
+            
+            // Create form data matching the backend expectations
+            const formData = new FormData();
+            
+            // Add recipient email
+            formData.append('recipient_email', recipient);
+            
+            // Add student data
+            formData.append('student_name', document.getElementById('student_name').value);
+            formData.append('candidate_number', document.getElementById('candidate_number').value);
+            formData.append('center_number', document.getElementById('center_number').value);
+            formData.append('session', document.getElementById('session').value);
+            formData.append('year', document.getElementById('year').value);
+            
+            // Add subject data
+            let index = 0;
+            selectedSubjects.forEach(code => {
+                const score = subjectGrades[code];
+                const comment = subjectComments[code] || '';
+                const coefficient = subjectCoefficients[code] || 1.0;
+                
+                if (score && !isNaN(parseFloat(score))) {
+                    formData.append(`subject_${index}`, code);
+                    formData.append(`score_${index}`, score);
+                    formData.append(`coefficient_${index}`, coefficient);
+                    formData.append(`comment_${index}`, comment);
+                    index++;
+                }
+            });
+            
+            // Set subject count
+            formData.append('subject_count', index);
+            
+            if (index === 0) {
+                alert('Please enter valid scores for at least one subject before sending email.');
+                return;
+            }
+            
+            // Send to backend
+            fetch('/send_email', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Email sent successfully!\n\n' + (data.message || 'Report has been emailed.'));
+                    // Close the modal
+                    const emailModal = bootstrap.Modal.getInstance(document.getElementById('emailModal'));
+                    emailModal.hide();
+                } else {
+                    alert('Failed to send email: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while sending the email.');
+            });
         }
 
         function previewReport() {
@@ -830,76 +1139,6 @@
             
             previewContent += '</table>';
             previewWindow.document.write(previewContent);
-        }
-
-        function sendViaMail() {
-            if (selectedSubjects.size === 0) {
-                alert('Please select at least one subject.');
-                return;
-            }
-            
-            const hasValidGrades = Array.from(selectedSubjects).some(code => 
-                subjectGrades[code] && !isNaN(parseFloat(subjectGrades[code]))
-            );
-            
-            if (!hasValidGrades) {
-                alert('Please enter valid scores for at least one subject.');
-                return;
-            }
-            
-            // Get recipient email
-            const recipientEmail = prompt('Enter recipient email address:');
-            if (!recipientEmail) {
-                return;
-            }
-            
-            // Validate email format
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(recipientEmail)) {
-                alert('Please enter a valid email address.');
-                return;
-            }
-            
-            // Prepare form data for email
-            const form = document.getElementById('reportForm');
-            const formData = new FormData(form);
-            formData.append('recipient_email', recipientEmail);
-            formData.append('action', 'email');
-            
-            // Add subject data
-            formData.append('subject_count', selectedSubjects.size);
-            let index = 0;
-            selectedSubjects.forEach(code => {
-                const subject = getSubjectByCode(code);
-                const score = subjectGrades[code];
-                
-                if (score && !isNaN(parseFloat(score))) {
-                    formData.append(`subject_${index}`, subject.name);
-                    formData.append(`score_${index}`, score);
-                    formData.append(`coefficient_${index}`, subjectCoefficients[code] || 1.0);
-                    formData.append(`comment_${index}`, subjectComments[code] || '');
-                    index++;
-                }
-            });
-            
-            formData.set('subject_count', index);
-            
-            // Submit email request
-            fetch('/send_email', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(`Report sent successfully to ${recipientEmail}!`);
-                } else {
-                    alert(`Failed to send email: ${data.error}`);
-                }
-            })
-            .catch(error => {
-                alert(`Error sending email: ${error.message}`);
-            });
         }
 
         // Initialize the interface
