@@ -320,161 +320,231 @@ class CambridgePDFGenerator:
         return content
 
     def _create_enhanced_header(self, student_data):
-        """Create enhanced header with Cambridge branding"""
+        """Create enhanced header with Cambridge branding - Joe's template style"""
         content = []
         
-        # Main title
-        title = Paragraph("Cambridge International Examination", self.styles['CustomTitle'])
+        # Official Cambridge Header - Large and Bold
+        title = Paragraph(
+            "<b>CAMBRIDGE INTERNATIONAL EXAMINATIONS</b>", 
+            ParagraphStyle(
+                name='MainTitle',
+                fontSize=18,
+                alignment=TA_CENTER,
+                spaceAfter=5,
+                textColor=colors.black,
+                fontName='Helvetica-Bold'
+            )
+        )
         content.append(title)
-        content.append(Spacer(1, 10))
         
         # Subtitle
-        subtitle = Paragraph("Advanced Academic Report Card", self.styles['CustomHeader'])
+        subtitle = Paragraph(
+            "General Certificate of Education Advanced Level",
+            ParagraphStyle(
+                name='Subtitle',
+                fontSize=12,
+                alignment=TA_CENTER,
+                spaceAfter=3,
+                textColor=colors.black,
+                fontName='Helvetica'
+            )
+        )
         content.append(subtitle)
-        content.append(Spacer(1, 20))
+        
+        # Report type
+        report_type = Paragraph(
+            "<b>STATEMENT OF RESULTS</b>",
+            ParagraphStyle(
+                name='ReportType',
+                fontSize=14,
+                alignment=TA_CENTER,
+                spaceAfter=25,
+                textColor=colors.black,
+                fontName='Helvetica-Bold'
+            )
+        )
+        content.append(report_type)
         
         return content
 
     def _create_enhanced_student_info(self, student_data):
-        """Create enhanced student information section"""
+        """Create enhanced student information section - Joe's template style"""
         content = []
         
-        # Student info header
-        info_header = Paragraph("Student Information", self.styles['CustomHeader'])
-        content.append(info_header)
-        content.append(Spacer(1, 10))
-        
-        # Student details table
+        # Student details in table format matching Joe's template
         student_info = [
-            ['Student Name:', student_data.get('name', 'N/A'), 'Candidate Number:', student_data.get('candidate_number', 'N/A')],
-            ['Center Number:', student_data.get('center_number', 'N/A'), 'Session:', student_data.get('session', 'N/A')],
-            ['Year:', student_data.get('year', 'N/A'), 'Total Subjects:', str(student_data.get('total_subjects', 0))],
+            ['Centre Number:', student_data.get('center_number', 'N/A'), '', 'Candidate Name:', student_data.get('name', 'N/A')],
+            ['', '', '', '', ''],
+            ['Candidate Number:', student_data.get('candidate_number', 'N/A'), '', 'Session:', f"{student_data.get('session', 'N/A')} {student_data.get('year', 'N/A')}"],
         ]
         
-        student_table = Table(student_info, colWidths=[1.5*inch, 2*inch, 1.5*inch, 2*inch])
+        student_table = Table(student_info, colWidths=[1.2*inch, 1.3*inch, 0.3*inch, 1.2*inch, 2*inch])
         student_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            # Labels styling (left side)
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (3, 0), (3, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
-            ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+            ('ALIGN', (3, 0), (3, -1), 'LEFT'),
+            ('ALIGN', (4, 0), (4, -1), 'LEFT'),
+            
+            # Values styling
             ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTNAME', (3, 0), (3, -1), 'Helvetica'),
-            ('LEFTPADDING', (0, 0), (-1, -1), 5),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('FONTNAME', (4, 0), (4, -1), 'Helvetica'),
+            
+            # Padding
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            
+            # No borders - clean look like Joe's template
+            ('GRID', (0, 0), (-1, -1), 0, colors.white),
         ]))
         
         content.append(student_table)
-        content.append(Spacer(1, 20))
+        content.append(Spacer(1, 25))
         
         return content
 
     def _create_enhanced_grades_table(self, student_data):
-        """Create enhanced grades table with coefficients and weighted scores"""
+        """Create enhanced grades table - Joe's template style"""
         content = []
         
-        # Grades header
-        grades_header = Paragraph("Academic Performance", self.styles['CustomHeader'])
-        content.append(grades_header)
-        content.append(Spacer(1, 10))
+        # Main results header
+        results_header = Paragraph(
+            "<b>Subject Results</b>",
+            ParagraphStyle(
+                name='ResultsHeader',
+                fontSize=12,
+                alignment=TA_LEFT,
+                spaceAfter=10,
+                textColor=colors.black,
+                fontName='Helvetica-Bold'
+            )
+        )
+        content.append(results_header)
         
-        # Table headers
-        headers = ['Subject', 'Raw Score', 'Letter Grade', 'Coefficient', 'Grade Points', 'Weighted Score']
+        # Table headers with Cambridge style
+        headers = ['Subject Code', 'Subject Title', 'Grade', 'Score', 'Grade Points']
         table_data = [headers]
         
         # Add subject data
         for subject in student_data.get('subjects', []):
+            # Extract subject code (assume first 4 characters or before first space)
+            subject_name = subject.get('name', '')
+            if ' ' in subject_name:
+                subject_code = subject_name.split(' ')[0]
+                subject_title = ' '.join(subject_name.split(' ')[1:])
+            else:
+                subject_code = subject_name[:4].upper() if len(subject_name) >= 4 else subject_name
+                subject_title = subject_name
+            
             row = [
-                self._wrap_text(subject.get('name', ''), 25),
-                f"{subject.get('score', 0):.1f}",
+                subject_code,
+                self._wrap_text(subject_title, 30),
                 subject.get('letter_grade', 'U'),
-                f"{subject.get('coefficient', 1.0):.1f}",
-                f"{subject.get('grade_points', 0.0):.1f}",
-                f"{subject.get('weighted_score', 0.0):.1f}"
+                f"{subject.get('score', 0):.0f}",
+                f"{subject.get('grade_points', 0.0):.1f}"
             ]
             table_data.append(row)
         
-        # Create table
-        grades_table = Table(table_data, colWidths=[2.2*inch, 0.8*inch, 0.8*inch, 0.8*inch, 0.8*inch, 1*inch])
+        # Create table with Cambridge-style formatting
+        grades_table = Table(table_data, colWidths=[1*inch, 3*inch, 0.8*inch, 0.8*inch, 1*inch])
         
-        # Style the table
+        # Style the table with clean Cambridge formatting
         style = [
-            ('BACKGROUND', (0, 0), (-1, 0), colors.navy),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            # Header row
+            ('BACKGROUND', (0, 0), (-1, 0), colors.white),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('ALIGN', (0, 1), (0, -1), 'LEFT'),  # Subject names left-aligned
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),  # Subject titles left-aligned
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
             ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            
+            # Borders - clean lines
+            ('LINEBELOW', (0, 0), (-1, 0), 2, colors.black),  # Bold line under header
+            ('LINEBELOW', (0, 1), (-1, -1), 0.5, colors.gray),  # Light lines under data rows
+            ('LINEBEFORE', (0, 0), (0, -1), 1, colors.black),  # Left border
+            ('LINEAFTER', (-1, 0), (-1, -1), 1, colors.black),  # Right border
+            
+            # Padding
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+            
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ]
         
-        # Alternate row colors
-        for i in range(1, len(table_data)):
-            if i % 2 == 0:
-                style.append(('BACKGROUND', (0, i), (-1, i), colors.lightgrey))
-        
         grades_table.setStyle(TableStyle(style))
         content.append(grades_table)
-        content.append(Spacer(1, 20))
+        content.append(Spacer(1, 25))
         
         return content
 
     def _create_gpa_summary(self, student_data):
-        """Create GPA summary section"""
+        """Create GPA summary section with Cambridge styling"""
         content = []
         
-        # GPA header
-        gpa_header = Paragraph("Academic Summary", self.styles['CustomHeader'])
-        content.append(gpa_header)
-        content.append(Spacer(1, 10))
+        # Summary header with Cambridge style
+        summary_header = Paragraph("PERFORMANCE SUMMARY", 
+                                 getSampleStyleSheet()['Heading1'])
+        summary_header.style.alignment = 1  # Center
+        summary_header.style.fontSize = 14
+        summary_header.style.fontName = 'Helvetica-Bold'
+        summary_header.style.spaceAfter = 12
+        content.append(summary_header)
         
-        # GPA information
+        # Calculate GPA and classification
         gpa = student_data.get('gpa', 0.0)
         total_subjects = student_data.get('total_subjects', 0)
         
-        # Performance classification
-        if gpa >= 3.5:
-            classification = "Distinction"
-            perf_color = colors.darkgreen
+        # Cambridge A-Level Performance Classification
+        if gpa >= 3.7:
+            classification = "DISTINCTION"
+            grade_range = "A* - A"
         elif gpa >= 3.0:
-            classification = "Merit"
-            perf_color = colors.orange
-        elif gpa >= 2.5:
-            classification = "Credit"
-            perf_color = colors.blue
+            classification = "MERIT"
+            grade_range = "A - B"
+        elif gpa >= 2.3:
+            classification = "CREDIT"
+            grade_range = "B - C"
         elif gpa >= 2.0:
-            classification = "Pass"
-            perf_color = colors.black
+            classification = "PASS"
+            grade_range = "C - D"
         else:
-            classification = "Below Standard"
-            perf_color = colors.red
+            classification = "UNCLASSIFIED"
+            grade_range = "Below D"
         
-        # GPA summary table
-        gpa_data = [
-            ['Overall GPA:', f"{gpa:.2f}/4.0", 'Classification:', classification],
-            ['Total Subjects:', str(total_subjects), 'Performance Level:', classification]
+        # Summary table with Cambridge formatting
+        summary_data = [
+            ['Overall Grade Point Average:', f"{gpa:.2f}"],
+            ['Total Subjects Attempted:', str(total_subjects)],
+            ['Performance Classification:', classification],
+            ['Grade Range:', grade_range]
         ]
         
-        gpa_table = Table(gpa_data, colWidths=[1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
-        gpa_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 12),
-            ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
-            ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
-            ('TEXTCOLOR', (1, 0), (1, 0), perf_color),
-            ('TEXTCOLOR', (3, 0), (3, -1), perf_color),
-            ('LEFTPADDING', (0, 0), (-1, -1), 5),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-            ('TOPPADDING', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        summary_table = Table(summary_data, colWidths=[3.5*inch, 2.5*inch])
+        summary_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            # Bold the classification row
+            ('FONTNAME', (0, 2), (-1, 2), 'Helvetica-Bold'),
         ]))
         
-        content.append(gpa_table)
+        content.append(summary_table)
         content.append(Spacer(1, 20))
         
         return content

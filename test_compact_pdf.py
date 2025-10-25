@@ -44,7 +44,7 @@ def test_compact_pdf():
     output_path = os.path.join(os.getcwd(), "test_compact_report_v3.pdf")
     print(f"Output path: {output_path}")
     try:
-        pdf_gen.generate_report(test_data, output_path)
+        pdf_gen.generate_enhanced_report(test_data, output_path)
         
         print(f"✅ PDF generated successfully: {output_path}")
         
