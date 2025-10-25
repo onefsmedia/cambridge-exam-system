@@ -8,7 +8,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT, TA_JUSTIFY
 from datetime import datetime
 import os
 from config import PDF_STYLE, APP_SETTINGS
@@ -21,8 +21,83 @@ class CambridgePDFGenerator:
         self.setup_custom_styles()
     
     def setup_custom_styles(self):
-        """Setup custom paragraph styles for the report"""
-        # Title style
+        """Setup custom paragraph styles matching Joe's template"""
+        # Cambridge header title style
+        self.styles.add(ParagraphStyle(
+            name='CambridgeTitle',
+            parent=self.styles['Normal'],
+            fontSize=16,
+            fontName='Helvetica-Bold',
+            alignment=TA_CENTER,
+            spaceAfter=8,
+            textColor=colors.black
+        ))
+        
+        # Cambridge subtitle style
+        self.styles.add(ParagraphStyle(
+            name='CambridgeSubtitle',
+            parent=self.styles['Normal'],
+            fontSize=12,
+            fontName='Helvetica-Bold',
+            alignment=TA_CENTER,
+            spaceAfter=6,
+            textColor=colors.black
+        ))
+        
+        # Cambridge document type style
+        self.styles.add(ParagraphStyle(
+            name='CambridgeDocType',
+            parent=self.styles['Normal'],
+            fontSize=14,
+            fontName='Helvetica-Bold',
+            alignment=TA_CENTER,
+            spaceAfter=20,
+            textColor=colors.black
+        ))
+        
+        # Body text style
+        self.styles.add(ParagraphStyle(
+            name='JoeBodyText',
+            parent=self.styles['Normal'],
+            fontSize=11,
+            fontName='Helvetica',
+            alignment=TA_LEFT,
+            spaceAfter=6
+        ))
+        
+        # Bold body text style
+        self.styles.add(ParagraphStyle(
+            name='JoeBodyTextBold',
+            parent=self.styles['Normal'],
+            fontSize=11,
+            fontName='Helvetica-Bold',
+            alignment=TA_LEFT,
+            spaceAfter=6
+        ))
+        
+        # Comments style
+        self.styles.add(ParagraphStyle(
+            name='JoeComments',
+            parent=self.styles['Normal'],
+            fontSize=10,
+            fontName='Helvetica',
+            alignment=TA_JUSTIFY,
+            spaceAfter=4,
+            leftIndent=10,
+            rightIndent=10
+        ))
+        
+        # Footer style
+        self.styles.add(ParagraphStyle(
+            name='JoeFooter',
+            parent=self.styles['Normal'],
+            fontSize=9,
+            fontName='Helvetica',
+            alignment=TA_CENTER,
+            textColor=colors.grey
+        ))
+        
+        # Legacy styles for backward compatibility
         self.styles.add(ParagraphStyle(
             name='CustomTitle',
             parent=self.styles['Heading1'],
@@ -32,7 +107,6 @@ class CambridgePDFGenerator:
             textColor=colors.darkblue
         ))
         
-        # Header style
         self.styles.add(ParagraphStyle(
             name='CustomHeader',
             parent=self.styles['Heading2'],
@@ -41,7 +115,6 @@ class CambridgePDFGenerator:
             spaceAfter=20
         ))
         
-        # Body style
         self.styles.add(ParagraphStyle(
             name='CustomBody',
             parent=self.styles['Normal'],
@@ -50,7 +123,6 @@ class CambridgePDFGenerator:
             spaceAfter=12
         ))
         
-        # Small text style
         self.styles.add(ParagraphStyle(
             name='CustomSmall',
             parent=self.styles['Normal'],
@@ -101,15 +173,11 @@ class CambridgePDFGenerator:
         # Student information
         story.extend(self._create_enhanced_student_info(student_data))
         
-        # Enhanced grades table with coefficients
+        # Enhanced grades table with coefficients and teacher comments
         story.extend(self._create_enhanced_grades_table(student_data))
         
         # GPA summary
         story.extend(self._create_gpa_summary(student_data))
-        
-        # Comments section
-        if any(subject.get('comment', '') for subject in student_data.get('subjects', [])):
-            story.extend(self._create_comments_section(student_data))
         
         # Footer
         story.extend(self._create_enhanced_footer())
@@ -320,91 +388,55 @@ class CambridgePDFGenerator:
         return content
 
     def _create_enhanced_header(self, student_data):
-        """Create enhanced header with Cambridge branding - Joe's template style"""
+        """Create Cambridge International Examinations header matching Joe's template"""
         content = []
         
-        # Official Cambridge Header - Large and Bold
-        title = Paragraph(
-            "<b>CAMBRIDGE INTERNATIONAL EXAMINATIONS</b>", 
-            ParagraphStyle(
-                name='MainTitle',
-                fontSize=18,
-                alignment=TA_CENTER,
-                spaceAfter=5,
-                textColor=colors.black,
-                fontName='Helvetica-Bold'
-            )
-        )
-        content.append(title)
+        # School name (centered) - use dynamic school name if provided
+        school_name_text = student_data.get('school_name', 'DOBEDA INTERNATIONAL SCHOOL')
+        school_name = Paragraph(school_name_text.upper(), self.styles['CambridgeTitle'])
+        content.append(school_name)
         
-        # Subtitle
-        subtitle = Paragraph(
-            "General Certificate of Education Advanced Level",
-            ParagraphStyle(
-                name='Subtitle',
-                fontSize=12,
-                alignment=TA_CENTER,
-                spaceAfter=3,
-                textColor=colors.black,
-                fontName='Helvetica'
-            )
-        )
-        content.append(subtitle)
+        # Main Cambridge title (centered)
+        cambridge_title = Paragraph("CAMBRIDGE INTERNATIONAL EXAMINATIONS", self.styles['CambridgeSubtitle'])
+        content.append(cambridge_title)
         
-        # Report type
-        report_type = Paragraph(
-            "<b>STATEMENT OF RESULTS</b>",
-            ParagraphStyle(
-                name='ReportType',
-                fontSize=14,
-                alignment=TA_CENTER,
-                spaceAfter=25,
-                textColor=colors.black,
-                fontName='Helvetica-Bold'
-            )
-        )
-        content.append(report_type)
+        # Statement of Results (centered)
+        statement = Paragraph("STATEMENT OF RESULTS", self.styles['CambridgeDocType'])
+        content.append(statement)
+        
+        content.append(Spacer(1, 15))
         
         return content
 
     def _create_enhanced_student_info(self, student_data):
-        """Create enhanced student information section - Joe's template style"""
+        """Create student information section matching Joe's template"""
         content = []
         
-        # Student details in table format matching Joe's template
-        student_info = [
-            ['Centre Number:', student_data.get('center_number', 'N/A'), '', 'Candidate Name:', student_data.get('name', 'N/A')],
-            ['', '', '', '', ''],
-            ['Candidate Number:', student_data.get('candidate_number', 'N/A'), '', 'Session:', f"{student_data.get('session', 'N/A')} {student_data.get('year', 'N/A')}"],
+        # Student info table data matching Joe's template with dynamic values
+        info_data = [
+            ['Centre Number:', student_data.get('centre_number', '12345'), 'Session:', student_data.get('session', 'June 2024')],
+            ['Candidate Name:', student_data.get('student_name', student_data.get('name', 'Unknown')), 'Candidate Number:', '  ' + student_data.get('candidate_number', '0001')],
         ]
         
-        student_table = Table(student_info, colWidths=[1.2*inch, 1.3*inch, 0.3*inch, 1.2*inch, 2*inch])
-        student_table.setStyle(TableStyle([
-            # Labels styling (left side)
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (3, 0), (3, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-            ('ALIGN', (3, 0), (3, -1), 'LEFT'),
-            ('ALIGN', (4, 0), (4, -1), 'LEFT'),
-            
-            # Values styling
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTNAME', (4, 0), (4, -1), 'Helvetica'),
-            
-            # Padding
+        # Create table with proper spacing - adjusted to prevent text overlap
+        info_table = Table(info_data, colWidths=[1.3*inch, 1.7*inch, 1.5*inch, 1.1*inch])
+        info_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('LEFTPADDING', (0, 0), (-1, -1), 0),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+            ('RIGHTPADDING', (2, 1), (2, 1), 8),  # Extra padding for "Candidate Number:" label
             ('TOPPADDING', (0, 0), (-1, -1), 4),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-            
-            # No borders - clean look like Joe's template
-            ('GRID', (0, 0), (-1, -1), 0, colors.white),
+            # Bold the labels only
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
         ]))
         
-        content.append(student_table)
-        content.append(Spacer(1, 25))
+        content.append(info_table)
+        content.append(Spacer(1, 20))
         
         return content
 
@@ -412,13 +444,13 @@ class CambridgePDFGenerator:
         """Create enhanced grades table - Joe's template style"""
         content = []
         
-        # Main results header
+        # Main results header - centered
         results_header = Paragraph(
             "<b>Subject Results</b>",
             ParagraphStyle(
                 name='ResultsHeader',
                 fontSize=12,
-                alignment=TA_LEFT,
+                alignment=TA_CENTER,
                 spaceAfter=10,
                 textColor=colors.black,
                 fontName='Helvetica-Bold'
@@ -426,52 +458,74 @@ class CambridgePDFGenerator:
         )
         content.append(results_header)
         
-        # Table headers with Cambridge style
-        headers = ['Subject Code', 'Subject Title', 'Grade', 'Score', 'Grade Points']
+        # Table headers with Cambridge style - abbreviated and properly spaced
+        headers = ['Subject', 'Coeff', 'Score', 'Grade', 'W. Score', 'Teacher Comments']
         table_data = [headers]
         
         # Add subject data
         for subject in student_data.get('subjects', []):
-            # Extract subject code (assume first 4 characters or before first space)
             subject_name = subject.get('name', '')
-            if ' ' in subject_name:
-                subject_code = subject_name.split(' ')[0]
-                subject_title = ' '.join(subject_name.split(' ')[1:])
-            else:
-                subject_code = subject_name[:4].upper() if len(subject_name) >= 4 else subject_name
-                subject_title = subject_name
+            
+            # Get teacher comments - look for multiple possible field names
+            teacher_comment = (
+                subject.get('teacher_comments', '') or 
+                subject.get('comment', '') or 
+                subject.get('comments', '') or 
+                'Good'  # Default comment
+            )
             
             row = [
-                subject_code,
-                self._wrap_text(subject_title, 30),
-                subject.get('letter_grade', 'U'),
-                f"{subject.get('score', 0):.0f}",
-                f"{subject.get('grade_points', 0.0):.1f}"
+                self._wrap_text(subject_name, 30),
+                f"{subject.get('coefficient', 1.0):.1f}",
+                f"{subject.get('score', 0):.0f}%",
+                subject.get('grade', subject.get('letter_grade', 'U')),
+                f"{subject.get('weighted_score', subject.get('score', 0) * subject.get('coefficient', 1.0)):.1f}",
+                self._wrap_text(teacher_comment, 25)
             ]
             table_data.append(row)
         
-        # Create table with Cambridge-style formatting
-        grades_table = Table(table_data, colWidths=[1*inch, 3*inch, 0.8*inch, 0.8*inch, 1*inch])
+        # Create table with Cambridge-style formatting - wider columns for Subject and Teacher Comments
+        grades_table = Table(table_data, colWidths=[2.2*inch, 0.7*inch, 0.7*inch, 0.6*inch, 0.8*inch, 1.6*inch])
         
-        # Style the table with clean Cambridge formatting
+        # Style the table with clean Cambridge formatting and proper alignment
         style = [
-            # Header row
+            # Header row styling
             ('BACKGROUND', (0, 0), (-1, 0), colors.white),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('ALIGN', (1, 0), (1, -1), 'LEFT'),  # Subject titles left-aligned
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),    # Subject column header left-aligned
+            ('ALIGN', (1, 0), (1, 0), 'CENTER'),  # Coeff header center
+            ('ALIGN', (2, 0), (2, 0), 'CENTER'),  # Score header center
+            ('ALIGN', (3, 0), (3, 0), 'CENTER'),  # Grade header center
+            ('ALIGN', (4, 0), (4, 0), 'CENTER'),  # W. Score header center
+            ('ALIGN', (5, 0), (5, 0), 'LEFT'),    # Teacher Comments header left
+            
+            # Data rows styling
             ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
             ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('ALIGN', (0, 1), (0, -1), 'LEFT'),    # Subject names left-aligned
+            ('ALIGN', (1, 1), (1, -1), 'CENTER'),  # Coefficient values center
+            ('ALIGN', (2, 1), (2, -1), 'CENTER'),  # Score values center
+            ('ALIGN', (3, 1), (3, -1), 'CENTER'),  # Grade values center
+            ('ALIGN', (4, 1), (4, -1), 'CENTER'),  # W. Score values center
+            ('ALIGN', (5, 1), (5, -1), 'LEFT'),    # Teacher Comments left-aligned
             
-            # Borders - clean lines
+            # Borders - clean professional lines with top border
+            ('LINEABOVE', (0, 0), (-1, 0), 2, colors.black),  # Bold line ABOVE header (top border)
             ('LINEBELOW', (0, 0), (-1, 0), 2, colors.black),  # Bold line under header
             ('LINEBELOW', (0, 1), (-1, -1), 0.5, colors.gray),  # Light lines under data rows
             ('LINEBEFORE', (0, 0), (0, -1), 1, colors.black),  # Left border
             ('LINEAFTER', (-1, 0), (-1, -1), 1, colors.black),  # Right border
+            ('LINEAFTER', (0, 0), (0, -1), 0.5, colors.gray),  # Subject column separator
+            ('LINEAFTER', (1, 0), (1, -1), 0.5, colors.gray),  # Coeff column separator
+            ('LINEAFTER', (2, 0), (2, -1), 0.5, colors.gray),  # Score column separator
+            ('LINEAFTER', (3, 0), (3, -1), 0.5, colors.gray),  # Grade column separator
+            ('LINEAFTER', (4, 0), (4, -1), 0.5, colors.gray),  # W. Score column separator
+            ('LINEAFTER', (3, 0), (3, -1), 0.5, colors.gray),  # Grade column separator
+            ('LINEAFTER', (4, 0), (4, -1), 0.5, colors.gray),  # Weighted Score column separator
             
-            # Padding
+            # Padding for better readability
             ('TOPPADDING', (0, 0), (-1, -1), 8),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
             ('LEFTPADDING', (0, 0), (-1, -1), 6),
@@ -550,57 +604,59 @@ class CambridgePDFGenerator:
         return content
 
     def _create_comments_section(self, student_data):
-        """Create teacher comments section"""
+        """Create teacher comments section matching Joe's template"""
         content = []
         
         # Comments header
-        comments_header = Paragraph("Teacher Comments", self.styles['CustomHeader'])
+        comments_header = Paragraph("Teacher Comments:", self.styles['JoeBodyTextBold'])
         content.append(comments_header)
         content.append(Spacer(1, 10))
         
         # Add comments for each subject
         for subject in student_data.get('subjects', []):
-            comment = subject.get('comment', '').strip()
+            comment = subject.get('teacher_comments', subject.get('comment', '')).strip()
             if comment:
                 subject_name = subject.get('name', 'Unknown Subject')
-                comment_text = f"<b>{subject_name}:</b> {comment}"
-                comment_para = Paragraph(comment_text, self.styles['CustomBody'])
+                
+                # Subject name in bold
+                subject_para = Paragraph(f"<b>{subject_name}:</b>", self.styles['JoeBodyText'])
+                content.append(subject_para)
+                
+                # Comment text
+                comment_para = Paragraph(comment, self.styles['JoeComments'])
                 content.append(comment_para)
                 content.append(Spacer(1, 8))
         
-        content.append(Spacer(1, 10))
+        content.append(Spacer(1, 20))
         return content
 
     def _create_enhanced_footer(self):
-        """Create enhanced footer with additional information"""
+        """Create footer with DOBEDA copyright matching Joe's template"""
         content = []
         
-        # Signature section
-        content.append(Spacer(1, 30))
+        # Add significant space before footer
+        content.append(Spacer(1, 40))
         
-        signature_data = [
-            ['Principal Signature', 'Date'],
-            ['_' * 30, '_' * 20],
+        # Signature lines
+        sig_data = [
+            ['_' * 30, '_' * 30],
+            ['Academic Coordinator', 'School Principal'],
+            ['Signature & Date', 'Signature & Date']
         ]
         
-        signature_table = Table(signature_data, colWidths=[3*inch, 3*inch])
-        signature_table.setStyle(TableStyle([
+        sig_table = Table(sig_data, colWidths=[3*inch, 3*inch])
+        sig_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
         ]))
         
-        content.append(signature_table)
-        content.append(Spacer(1, 20))
+        content.append(sig_table)
+        content.append(Spacer(1, 30))
         
-        # Enhanced footer text
-        footer_text = Paragraph(
-            f"Generated by {APP_SETTINGS['title']} v{APP_SETTINGS['version']} | "
-            f"Enhanced Report with Weighted Grading | "
-            f"Report Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
-            self.styles['CustomSmall']
-        )
+        # DOBEDA copyright footer
+        footer_text = Paragraph("© 2024 DOBEDA - Cambridge Examination Report System", self.styles['JoeFooter'])
         content.append(footer_text)
         
         return content
@@ -633,41 +689,41 @@ class CambridgePDFGenerator:
     def generate_sample_report(self):
         """Generate a sample report for testing"""
         sample_data = {
-            'name': 'John Smith',
-            'candidate_number': 'CB123456',
-            'exam_session': 'June 2024',
-            'school': 'Cambridge International School',
+            'name': 'Sample Student',
+            'candidate_number': '0001',
+            'exam_session': 'October 2025',
+            'school': 'Sample School',
             'subjects': [
                 {
                     'name': 'Mathematics',
                     'coefficient': 2.0,
+                    'score': 90,
+                    'grade': 'A*',
+                    'weighted_score': 180.0,
+                    'comment': 'Excellent performance with strong analytical skills.'
+                },
+                {
+                    'name': 'English Language',
+                    'coefficient': 1.5,
                     'score': 85,
                     'grade': 'A',
-                    'weighted_score': 170.0,
-                    'comment': 'Excellent problem-solving skills and strong understanding of algebraic concepts.'
+                    'weighted_score': 127.5,
+                    'comment': 'Very good communication and writing abilities.'
                 },
                 {
-                    'name': 'Physics',
+                    'name': 'Science',
                     'coefficient': 1.8,
-                    'score': 78,
-                    'grade': 'B',
-                    'weighted_score': 140.4,
-                    'comment': 'Good grasp of fundamental principles. Needs improvement in practical applications.'
-                },
-                {
-                    'name': 'English Literature',
-                    'coefficient': 1.5,
-                    'score': 92,
-                    'grade': 'A*',
-                    'weighted_score': 138.0,
-                    'comment': 'Outstanding analytical skills and excellent written expression.'
+                    'score': 88,
+                    'grade': 'A',
+                    'weighted_score': 158.4,
+                    'comment': 'Strong understanding of scientific concepts.'
                 }
             ],
             'final_grade': {
-                'total_weighted_score': 448.4,
+                'total_weighted_score': 465.9,
                 'total_coefficient': 5.3,
-                'weighted_average': 84.6,
-                'final_grade': 'A'
+                'weighted_average': 87.9,
+                'final_grade': 'A*'
             }
         }
         
