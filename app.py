@@ -29,7 +29,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'cambridge_exam_system_2024_secure_key')
+app.secret_key = os.environ.get('SECRET_KEY', 'cambridge_exam_system_2025_secure_key')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Create necessary directories

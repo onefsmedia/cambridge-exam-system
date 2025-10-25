@@ -327,7 +327,7 @@ class JoeCambridgePDFGenerator:
         content.append(Spacer(1, 30))
         
         # DOBEDA copyright footer
-        footer_text = Paragraph("© 2024 DOBEDA - Cambridge Examination Report System", self.styles['JoeFooter'])
+        footer_text = Paragraph("© 2025 DOBEDA - Cambridge Examination Report System", self.styles['JoeFooter'])
         content.append(footer_text)
         
         return content

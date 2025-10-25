@@ -678,7 +678,7 @@ class CambridgeReportGUI:
         # Set student info
         self.student_name_var.set("John Smith")
         self.candidate_number_var.set("CB123456")
-        self.exam_session_var.set("June 2024")
+        self.exam_session_var.set("June 2025")
         self.school_var.set("Cambridge International School")
         
         # Sample subjects data
