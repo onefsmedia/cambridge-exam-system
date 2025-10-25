@@ -53,7 +53,7 @@ except Exception as e:
 def index():
     """Main page with enhanced report form matching desktop GUI"""
     logger.info("Index page accessed")
-    return render_template('index_new.html', subjects=CAMBRIDGE_SUBJECTS)
+    return render_template('index.html', subjects=CAMBRIDGE_SUBJECTS)
 
 @app.route('/legacy')
 def legacy_index():
@@ -77,7 +77,7 @@ def generate_report():
         student_data = {
             'name': request.form.get('student_name', ''),
             'candidate_number': request.form.get('candidate_number', ''),
-            'center_number': request.form.get('center_number', ''),
+            'school': request.form.get('center_number', ''),  # Using center_number field but calling it school
             'session': request.form.get('session', ''),
             'year': request.form.get('year', ''),
             'subjects': []
@@ -223,6 +223,129 @@ def get_grade_points(score):
         return 1.0
     else:
         return 0.0
+
+@app.route('/send_email', methods=['POST'])
+def send_email():
+    """Send report via email"""
+    try:
+        logger.info("Email sending requested")
+        
+        # Get recipient email
+        recipient_email = request.form.get('recipient_email', '')
+        if not recipient_email:
+            return jsonify({'success': False, 'error': 'No recipient email provided'})
+        
+        # Get form data (same as generate_report)
+        student_data = {
+            'name': request.form.get('student_name', ''),
+            'candidate_number': request.form.get('candidate_number', ''),
+            'school': request.form.get('center_number', ''),
+            'session': request.form.get('session', ''),
+            'year': request.form.get('year', ''),
+            'subjects': []
+        }
+        
+        # Parse subject data with comments
+        subject_count = int(request.form.get('subject_count', 0))
+        total_weighted_score = 0
+        total_coefficients = 0
+        
+        for i in range(subject_count):
+            subject_name = request.form.get(f'subject_{i}')
+            raw_score = request.form.get(f'score_{i}')
+            coefficient = request.form.get(f'coefficient_{i}', '1.0')
+            comment = request.form.get(f'comment_{i}', '')
+            
+            if subject_name and raw_score:
+                try:
+                    score = float(raw_score)
+                    coeff = float(coefficient)
+                    
+                    if 0 <= score <= 100 and 0.1 <= coeff <= 3.0:
+                        letter_grade = calculate_letter_grade(score)
+                        grade_points = get_grade_points(score)
+                        weighted_score = grade_points * coeff
+                        
+                        total_weighted_score += weighted_score
+                        total_coefficients += coeff
+                        
+                        subject_info = {
+                            'name': subject_name,
+                            'score': score,
+                            'coefficient': coeff,
+                            'letter_grade': letter_grade,
+                            'grade_points': grade_points,
+                            'weighted_score': weighted_score,
+                            'comment': comment
+                        }
+                        
+                        student_data['subjects'].append(subject_info)
+                        
+                except ValueError:
+                    continue
+        
+        if not student_data['subjects']:
+            return jsonify({'success': False, 'error': 'No valid subjects with scores provided'})
+        
+        # Calculate GPA
+        if total_coefficients > 0:
+            overall_gpa = total_weighted_score / total_coefficients
+            student_data['gpa'] = round(overall_gpa, 2)
+            student_data['total_subjects'] = len(student_data['subjects'])
+        
+        # Generate PDF first
+        try:
+            pdf_generator = CambridgePDFGenerator()
+            
+            # Create temporary file for PDF
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf', dir=REPORTS_FOLDER) as tmp_file:
+                temp_path = tmp_file.name
+            
+            # Generate enhanced PDF
+            pdf_generator.generate_enhanced_report(student_data, temp_path)
+            
+            # Create email content
+            subject = f"Cambridge International Examination Report - {student_data['name']}"
+            
+            # Simple email body (since we don't have SMTP configured, we'll return success for now)
+            body = f"""
+Dear Recipient,
+
+Please find attached the Cambridge International Examination Report for:
+
+Student: {student_data['name']}
+Candidate Number: {student_data['candidate_number']}
+School: {student_data['school']}
+Session: {student_data['session']} {student_data['year']}
+Overall GPA: {student_data.get('gpa', 'N/A')}/4.0
+
+Total Subjects: {student_data.get('total_subjects', 0)}
+
+Best regards,
+Cambridge Exam System
+"""
+            
+            # In a real implementation, you would send the email here
+            # For now, we'll just log the action and return success
+            logger.info(f"Email would be sent to {recipient_email}")
+            logger.info(f"Subject: {subject}")
+            logger.info(f"PDF path: {temp_path}")
+            
+            # Clean up temp file
+            os.unlink(temp_path)
+            
+            return jsonify({
+                'success': True, 
+                'message': f'Report email prepared for {recipient_email}. Note: Email sending requires SMTP configuration.'
+            })
+            
+        except Exception as e:
+            logger.error(f"Error generating PDF for email: {str(e)}")
+            return jsonify({'success': False, 'error': f'Failed to generate PDF: {str(e)}'})
+            
+    except Exception as e:
+        logger.error(f"Error processing email request: {str(e)}")
+        return jsonify({'success': False, 'error': f'Failed to process email request: {str(e)}'})
 
 @app.route('/preview')
 def preview():

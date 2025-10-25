@@ -139,6 +139,16 @@
             box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
         }
 
+        .btn-warning-custom {
+            background: linear-gradient(135deg, var(--warning-color), #e67e22);
+            color: white;
+        }
+
+        .btn-warning-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.3);
+        }
+
         .btn-danger-custom {
             background: linear-gradient(135deg, var(--danger-color), #c0392b);
             color: white;
@@ -202,12 +212,32 @@
             background: white;
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 1rem;
+            padding: 1.5rem;
             margin-bottom: 1rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .subject-details-row {
             display: grid;
             grid-template-columns: 2fr 1fr 1fr 1fr auto;
             gap: 1rem;
             align-items: center;
+        }
+
+        .comment-row {
+            margin-top: 1rem;
+        }
+
+        .comment-textarea {
+            width: 100%;
+            min-height: 80px;
+            resize: vertical;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-family: inherit;
         }
 
         .grade-display {
@@ -310,7 +340,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="center_number" class="form-label">Center Number</label>
+                                    <label for="center_number" class="form-label">School</label>
                                     <input type="text" class="form-control" id="center_number" name="center_number" required>
                                 </div>
                                 <div class="col-md-4">
@@ -390,6 +420,9 @@
                     <button type="button" class="btn btn-success-custom btn-custom" onclick="generateReport()" disabled id="generateBtn">
                         <i class="fas fa-file-pdf me-2"></i>Generate PDF Report
                     </button>
+                    <button type="button" class="btn btn-warning-custom btn-custom" onclick="sendViaMail()" disabled id="emailBtn">
+                        <i class="fas fa-envelope me-2"></i>Send Via Mail
+                    </button>
                     <button type="button" class="btn btn-outline-secondary btn-custom" onclick="resetForm()">
                         <i class="fas fa-redo me-2"></i>Reset Form
                     </button>
@@ -465,19 +498,43 @@
                 
                 html += `
                     <div class="selected-subject-item">
-                        <div>
-                            <strong>${code}</strong><br>
-                            <small class="text-muted">${subject.name}</small>
+                        <div class="subject-details-row">
+                            <div>
+                                <strong>${code}</strong><br>
+                                <small class="text-muted">${subject.name}</small>
+                            </div>
+                            <div>
+                                <label class="form-label">Raw Score (0-100)</label>
+                                <input type="number" class="form-control" min="0" max="100" 
+                                       value="${subjectGrades[code] || ''}" 
+                                       onchange="updateGrade('${code}', this.value)"
+                                       placeholder="Enter score">
+                            </div>
+                            <div>
+                                <label class="form-label">Coefficient</label>
+                                <input type="number" class="form-control" step="0.1" min="0.1" max="3.0"
+                                       value="${subjectCoefficients[code] || 1.0}"
+                                       onchange="updateCoefficient('${code}', this.value)">
+                            </div>
+                            <div class="text-center">
+                                <label class="form-label">Grade</label>
+                                <div class="grade-display ${gradeClass}">${grade}</div>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-danger-custom btn-sm" onclick="removeSubject('${code}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div>
-                            <label class="form-label">Raw Score (0-100)</label>
-                            <input type="number" class="form-control" min="0" max="100" 
-                                   value="${subjectGrades[code] || ''}" 
-                                   onchange="updateGrade('${code}', this.value)"
-                                   placeholder="Enter score">
+                        <div class="comment-row">
+                            <label class="form-label">Teacher Comment</label>
+                            <textarea class="comment-textarea" 
+                                      placeholder="Enter teacher comment for ${subject.name}..."
+                                      onchange="updateComment('${code}', this.value)">${subjectComments[code] || ''}</textarea>
                         </div>
-                        <div>
-                            <label class="form-label">Coefficient</label>
+                    </div>
+                `;
+            });
                             <input type="number" class="form-control" step="0.1" min="0.1" max="3.0"
                                    value="${subjectCoefficients[code] || 1.0}"
                                    onchange="updateCoefficient('${code}', this.value)">
@@ -505,6 +562,10 @@
 
         function updateCoefficient(code, coefficient) {
             subjectCoefficients[code] = parseFloat(coefficient);
+        }
+
+        function updateComment(code, comment) {
+            subjectComments[code] = comment;
         }
 
         function removeSubject(code) {
@@ -556,6 +617,7 @@
             
             document.getElementById('previewBtn').disabled = !hasValidGrades;
             document.getElementById('generateBtn').disabled = !hasValidGrades;
+            document.getElementById('emailBtn').disabled = !hasValidGrades;
         }
 
         function filterSubjects() {
@@ -637,7 +699,7 @@
             const form = document.getElementById('reportForm');
             const formData = new FormData(form);
 
-            // Add subject data
+            // Add subject data with comments
             formData.append('subject_count', selectedSubjects.size);
             let index = 0;
             selectedSubjects.forEach(code => {
@@ -648,6 +710,7 @@
                     formData.append(`subject_${index}`, subject.name);
                     formData.append(`score_${index}`, score);
                     formData.append(`coefficient_${index}`, subjectCoefficients[code] || 1.0);
+                    formData.append(`comment_${index}`, subjectComments[code] || '');
                     index++;
                 }
             });
@@ -670,6 +733,13 @@
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = key;
+                input.value = value;
+                form2.appendChild(input);
+            }
+
+            document.body.appendChild(form2);
+            form2.submit();
+        }
                 input.value = value;
                 form2.appendChild(input);
             }
@@ -702,6 +772,134 @@
                 document.getElementById('subjectSearch').value = '';
                 filterSubjects();
             }
+        }
+
+        function previewReport() {
+            if (selectedSubjects.size === 0) {
+                alert('Please select at least one subject.');
+                return;
+            }
+            
+            const hasValidGrades = Array.from(selectedSubjects).some(code => 
+                subjectGrades[code] && !isNaN(parseFloat(subjectGrades[code]))
+            );
+            
+            if (!hasValidGrades) {
+                alert('Please enter valid scores for at least one subject.');
+                return;
+            }
+            
+            // Create preview window
+            const previewWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes');
+            let previewContent = '<h2>Cambridge Report Preview</h2>';
+            
+            // Student info
+            const studentName = document.getElementById('student_name').value || 'N/A';
+            const candidateNumber = document.getElementById('candidate_number').value || 'N/A';
+            const school = document.getElementById('center_number').value || 'N/A';
+            const session = document.getElementById('session').value || 'N/A';
+            const year = document.getElementById('year').value || 'N/A';
+            
+            previewContent += `<p><strong>Student:</strong> ${studentName}</p>`;
+            previewContent += `<p><strong>Candidate Number:</strong> ${candidateNumber}</p>`;
+            previewContent += `<p><strong>School:</strong> ${school}</p>`;
+            previewContent += `<p><strong>Session:</strong> ${session} ${year}</p>`;
+            
+            // Subjects table
+            previewContent += '<h3>Subjects and Grades</h3>';
+            previewContent += '<table border="1" style="border-collapse: collapse; width: 100%;">';
+            previewContent += '<tr><th>Subject</th><th>Score</th><th>Grade</th><th>Coefficient</th><th>Comment</th></tr>';
+            
+            selectedSubjects.forEach(code => {
+                const subject = getSubjectByCode(code);
+                const score = subjectGrades[code] || '';
+                const grade = calculateGrade(score);
+                const coefficient = subjectCoefficients[code] || 1.0;
+                const comment = subjectComments[code] || '';
+                
+                if (score && !isNaN(parseFloat(score))) {
+                    previewContent += `<tr>`;
+                    previewContent += `<td>${subject.name}</td>`;
+                    previewContent += `<td>${score}</td>`;
+                    previewContent += `<td>${grade}</td>`;
+                    previewContent += `<td>${coefficient}</td>`;
+                    previewContent += `<td>${comment}</td>`;
+                    previewContent += `</tr>`;
+                }
+            });
+            
+            previewContent += '</table>';
+            previewWindow.document.write(previewContent);
+        }
+
+        function sendViaMail() {
+            if (selectedSubjects.size === 0) {
+                alert('Please select at least one subject.');
+                return;
+            }
+            
+            const hasValidGrades = Array.from(selectedSubjects).some(code => 
+                subjectGrades[code] && !isNaN(parseFloat(subjectGrades[code]))
+            );
+            
+            if (!hasValidGrades) {
+                alert('Please enter valid scores for at least one subject.');
+                return;
+            }
+            
+            // Get recipient email
+            const recipientEmail = prompt('Enter recipient email address:');
+            if (!recipientEmail) {
+                return;
+            }
+            
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(recipientEmail)) {
+                alert('Please enter a valid email address.');
+                return;
+            }
+            
+            // Prepare form data for email
+            const form = document.getElementById('reportForm');
+            const formData = new FormData(form);
+            formData.append('recipient_email', recipientEmail);
+            formData.append('action', 'email');
+            
+            // Add subject data
+            formData.append('subject_count', selectedSubjects.size);
+            let index = 0;
+            selectedSubjects.forEach(code => {
+                const subject = getSubjectByCode(code);
+                const score = subjectGrades[code];
+                
+                if (score && !isNaN(parseFloat(score))) {
+                    formData.append(`subject_${index}`, subject.name);
+                    formData.append(`score_${index}`, score);
+                    formData.append(`coefficient_${index}`, subjectCoefficients[code] || 1.0);
+                    formData.append(`comment_${index}`, subjectComments[code] || '');
+                    index++;
+                }
+            });
+            
+            formData.set('subject_count', index);
+            
+            // Submit email request
+            fetch('/send_email', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Report sent successfully to ${recipientEmail}!`);
+                } else {
+                    alert(`Failed to send email: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                alert(`Error sending email: ${error.message}`);
+            });
         }
 
         // Initialize the interface
