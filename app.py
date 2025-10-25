@@ -77,7 +77,7 @@ def generate_report():
         student_data = {
             'name': request.form.get('student_name', ''),
             'candidate_number': request.form.get('candidate_number', ''),
-            'school': request.form.get('center_number', ''),  # Using center_number field but calling it school
+            'school_name': request.form.get('center_number', ''),  # Correctly map school name field
             'session': request.form.get('session', ''),
             'year': request.form.get('year', ''),
             'subjects': []

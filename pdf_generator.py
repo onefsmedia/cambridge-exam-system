@@ -662,9 +662,12 @@ class CambridgePDFGenerator:
         return content
     
     def _wrap_text(self, text, max_length):
-        """Wrap text to fit in table cells"""
+        """Wrap text to fit in table cells, breaking only between words"""
         if len(text) <= max_length:
             return text
+        
+        # Remove any existing HTML tags
+        text = text.replace('<br/>', ' ').replace('<br>', ' ')
         
         words = text.split()
         lines = []
@@ -672,19 +675,29 @@ class CambridgePDFGenerator:
         current_length = 0
         
         for word in words:
-            if current_length + len(word) + 1 <= max_length:
+            # Calculate the length of current line if this word is added
+            test_length = current_length + len(word) + (1 if current_line else 0)  # +1 for space
+            
+            if test_length <= max_length:
                 current_line.append(word)
-                current_length += len(word) + 1
+                current_length = test_length
             else:
+                # If current line has words, save it and start new line
                 if current_line:
                     lines.append(' '.join(current_line))
-                current_line = [word]
-                current_length = len(word)
+                    current_line = [word]
+                    current_length = len(word)
+                else:
+                    # Single word too long, just add it
+                    lines.append(word)
+                    current_line = []
+                    current_length = 0
         
         if current_line:
             lines.append(' '.join(current_line))
         
-        return '<br/>'.join(lines)
+        # Return joined lines with newline characters for ReportLab
+        return '\n'.join(lines)
     
     def generate_sample_report(self):
         """Generate a sample report for testing"""
