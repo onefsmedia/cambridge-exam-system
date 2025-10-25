@@ -223,25 +223,6 @@ def get_grade_points(score):
         return 1.0
     else:
         return 0.0
-        
-        # Generate PDF
-        logger.info("Generating PDF report")
-        pdf_generator = CambridgePDFGenerator()
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"cambridge_report_{timestamp}.pdf"
-        filepath = os.path.join(REPORTS_FOLDER, filename)
-        
-        # Generate the PDF
-        pdf_generator.generate_report(student_data, filepath)
-        
-        logger.info(f"Generated report: {filename}")
-        return send_file(filepath, as_attachment=True, download_name=filename)
-        
-    except Exception as e:
-        error_msg = f"Error generating report: {str(e)}"
-        logger.error(error_msg, exc_info=True)
-        flash(error_msg, 'error')
-        return redirect(url_for('index'))
 
 @app.route('/preview')
 def preview():
