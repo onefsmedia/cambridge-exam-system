@@ -557,29 +557,29 @@ class CambridgePDFGenerator:
         gpa = student_data.get('gpa', 0.0)
         total_subjects = student_data.get('total_subjects', 0)
         
+        # Get overall grade and average from final_grade data
+        final_data = student_data.get('final_grade', {})
+        overall_grade = final_data.get('final_grade', 'N/A')
+        weighted_average = final_data.get('weighted_average', 0.0)
+        
         # Cambridge A-Level Performance Classification
         if gpa >= 3.7:
             classification = "DISTINCTION"
-            grade_range = "A* - A"
         elif gpa >= 3.0:
             classification = "MERIT"
-            grade_range = "A - B"
         elif gpa >= 2.3:
             classification = "CREDIT"
-            grade_range = "B - C"
         elif gpa >= 2.0:
             classification = "PASS"
-            grade_range = "C - D"
         else:
             classification = "UNCLASSIFIED"
-            grade_range = "Below D"
         
         # Summary table with Cambridge formatting
         summary_data = [
-            ['Overall Grade Point Average:', f"{gpa:.2f}"],
+            ['Average:', f"{weighted_average:.1f}%"],
             ['Total Subjects Attempted:', str(total_subjects)],
             ['Performance Classification:', classification],
-            ['Grade Range:', grade_range]
+            ['Overall Grade:', overall_grade]
         ]
         
         summary_table = Table(summary_data, colWidths=[3.5*inch, 2.5*inch])
