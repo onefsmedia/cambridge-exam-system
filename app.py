@@ -145,6 +145,18 @@ def generate_report():
             student_data['gpa'] = round(overall_gpa, 2)
             student_data['total_subjects'] = len(student_data['subjects'])
             logger.info(f"Calculated GPA: {student_data['gpa']} from {student_data['total_subjects']} subjects")
+            
+            # Calculate weighted average and final grade for PDF summary
+            weighted_average = (total_weighted_score / total_coefficients) * (100/4)  # Convert GPA scale to percentage
+            final_grade = calculate_letter_grade(weighted_average)
+            
+            student_data['final_grade'] = {
+                'total_weighted_score': round(total_weighted_score, 1),
+                'total_coefficient': round(total_coefficients, 1),
+                'weighted_average': round(weighted_average, 1),
+                'final_grade': final_grade
+            }
+            logger.info(f"Calculated final grade data: Average={weighted_average:.1f}%, Grade={final_grade}")
         
         # Generate enhanced PDF with all features
         try:
@@ -292,6 +304,17 @@ def send_email():
             overall_gpa = total_weighted_score / total_coefficients
             student_data['gpa'] = round(overall_gpa, 2)
             student_data['total_subjects'] = len(student_data['subjects'])
+            
+            # Calculate weighted average and final grade for PDF summary
+            weighted_average = (total_weighted_score / total_coefficients) * (100/4)  # Convert GPA scale to percentage
+            final_grade = calculate_letter_grade(weighted_average)
+            
+            student_data['final_grade'] = {
+                'total_weighted_score': round(total_weighted_score, 1),
+                'total_coefficient': round(total_coefficients, 1),
+                'weighted_average': round(weighted_average, 1),
+                'final_grade': final_grade
+            }
         
         # Generate PDF first
         try:
