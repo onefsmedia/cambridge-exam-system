@@ -183,7 +183,7 @@ def generate_report():
         return redirect(url_for('index'))
 
 def calculate_letter_grade(score):
-    """Calculate letter grade from numerical score"""
+    """Calculate letter grade from numerical score - range A* to U"""
     if score >= 90:
         return 'A*'
     elif score >= 80:
@@ -201,7 +201,7 @@ def calculate_letter_grade(score):
     elif score >= 20:
         return 'G'
     else:
-        return 'U'
+        return 'U'  # Ungraded for scores below 20
 
 def get_grade_points(score):
     """Convert score to grade points for GPA calculation"""

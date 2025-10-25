@@ -19,7 +19,7 @@ class CambridgeCalculator:
         }
     
     def calculate_grade_from_score(self, score):
-        """Calculate letter grade from numerical score"""
+        """Calculate letter grade from numerical score - range A* to U"""
         if score >= 90:
             return 'A*'
         elif score >= 80:
@@ -37,7 +37,7 @@ class CambridgeCalculator:
         elif score >= 20:
             return 'G'
         else:
-            return 'U'  # Ungraded
+            return 'U'  # Ungraded for scores below 20
     
     def calculate_weighted_score(self, score, coefficient):
         """Calculate weighted score using coefficient"""

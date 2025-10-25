@@ -120,7 +120,7 @@ class ComprehensiveCambridgeGUI:
         return "\n".join(lines)
     
     def calculate_grade_from_score(self, score):
-        """Calculate letter grade from numerical score"""
+        """Calculate letter grade from numerical score - range A* to U"""
         try:
             score = float(score)
             if score >= 90:
@@ -140,7 +140,7 @@ class ComprehensiveCambridgeGUI:
             elif score >= 20:
                 return 'G'
             else:
-                return 'U'
+                return 'U'  # Ungraded for scores below 20
         except:
             return '-'
     

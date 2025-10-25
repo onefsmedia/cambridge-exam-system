@@ -85,7 +85,7 @@ CAMBRIDGE_SUBJECTS = {
     '9607': {'name': 'Media Studies (A Level)', 'coefficient': 1.3},
 }
 
-# Official Cambridge IGCSE/AS&A-Level grade thresholds
+# Official Cambridge IGCSE/AS&A-Level grade thresholds - range A* to U
 GRADE_THRESHOLDS = [
     {"min": 90, "max": 100, "grade": "A*"},
     {"min": 80, "max": 89, "grade": "A"},
@@ -94,7 +94,8 @@ GRADE_THRESHOLDS = [
     {"min": 50, "max": 59, "grade": "D"},
     {"min": 40, "max": 49, "grade": "E"},
     {"min": 30, "max": 39, "grade": "F"},
-    {"min": 20, "max": 29, "grade": "G"}
+    {"min": 20, "max": 29, "grade": "G"},
+    {"min": 0, "max": 19, "grade": "U"}  # Ungraded for scores below 20
 ]
 
 # Application settings

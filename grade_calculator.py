@@ -13,13 +13,13 @@ class CambridgeGradeCalculator:
     
     def score_to_grade(self, score):
         """
-        Convert a raw score (0-100) to Cambridge grade (A* to G)
+        Convert a raw score (0-100) to Cambridge grade (A* to U)
         
         Args:
             score (float): Raw score between 0 and 100
             
         Returns:
-            str: Cambridge grade (A*, A, B, C, D, E, F, G, or UNGRADED)
+            str: Cambridge grade (A*, A, B, C, D, E, F, G, U, or UNGRADED)
         """
         if not isinstance(score, (int, float)) or score < 0 or score > 100:
             return "UNGRADED"
@@ -104,7 +104,7 @@ class CambridgeGradeCalculator:
             grade (str): Cambridge grade
             
         Returns:
-            int: Grade points (8 for A*, 7 for A, etc.)
+            int: Grade points (8 for A*, 7 for A, etc., 0 for U)
         """
         grade_points = {
             "A*": 8,
@@ -115,6 +115,7 @@ class CambridgeGradeCalculator:
             "E": 3,
             "F": 2,
             "G": 1,
+            "U": 0,        # Ungraded
             "UNGRADED": 0
         }
         return grade_points.get(grade, 0)
